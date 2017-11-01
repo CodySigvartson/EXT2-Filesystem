@@ -1,5 +1,5 @@
 /* Utilitiy functions for EXT2 Filesystem */
-#include "l45.h"
+#include "l6.h"
 #include <ext2fs/ext2_fs.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -162,9 +162,9 @@ int iput(MINODE *mip){
         return;
     }
     // check if mip was modified
-    //if(!mip->dirty){
-      //  return;
-    //}
+    if(!mip->dirty){
+       return;
+    }
 
     // get the minode location on disk
     block = mip->ino / 8 + 10;

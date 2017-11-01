@@ -12,7 +12,7 @@
 #define CMD_BUFF 128
 
 // possible commands
-char *cmds[] = {"cd","pwd","ls","quit"};
+char *cmds[] = {"cd","pwd","ls","mkdir","quit"};
 // user input (command, command buffer)
 char cmd[CMD_BUFF], cmdbuff[CMD_BUFF];
 char *myargv[64];
@@ -47,7 +47,7 @@ int findCmd(char *cmd){
 int rpwd(MINODE *wd){
     printf("rpwd(): getting working directory...\n");
     int my_ino, par_ino;
-    char *dirname = malloc(sizeof(char) * 64);
+    char dirname[64];
     printf("rpwd(): before root check\n");
     if(wd == root){
         return;
@@ -78,7 +78,7 @@ int rpwd(MINODE *wd){
     printf("rpwd(): iterating dirs...\n");
     while(cp < buff + BLKSIZE){
         if(dp->inode == my_ino){
-            dirname = dp->name;
+            strcpy(dirname,dp->name);
             printf("rpwd(): dirname is %s\n",dirname);
             break;
         }
@@ -209,7 +209,218 @@ int ls_file(int ino){
 
 }
 
+// test bit value
+int test_bit(char *buf, int bit){
+    return buf[bit/8] & (1 << (bit % 8));
+}
+
+// set bit value
+int set_bit(char *buf, int bit){
+    buf[bit/8] |= (1 << (bit % 8));
+}
+
+// decrement number of free inodes or blocks
+// blktype: 0 - inode, 1 - block
+int dec(int dev, int blktype){
+    get_block(dev, SBLK, buff);
+    sp = (SUPER *)buff;
+    if(blktype == 0)
+        sp->s_free_inodes_count--;
+    else if(blktype == 1)
+        sp->s_free_blocks_count--;
+    put_block(dev,SBLK,buff);
+    get_block(dev,GDBLK,buff);
+    gp = (GD *)buff;
+    if(blktype == 0)
+        gp->bg_free_inodes_count--;
+    else if(blktype == 1)
+        gp->bg_free_blocks_count--;
+    put_block(dev,GDBLK,buff);
+}
+
+// allocates an inode on device
+int ialloc(int dev){
+    char buf[BLKSIZE];
+    // get imap block
+    get_block(dev,imap,buf);
+    for(int i = 0; i < ninodes; i++){
+        if(test_bit(buf,i)==0){
+            set_bit(buf,i);
+            put_block(dev,imap,buff);
+            dec(dev,0);
+            return (i+1); // +1 to go back to 1 index for reuse in iget
+        }
+    }
+    return 0; // no free inodes available
+}
+
+// allocates a free disk block on device
+int balloc(int dev){
+    char buf[BLKSIZE];
+    // get block bitmap
+    get_block(dev,bmap,buf);
+    for(int i = 0; i < nblocks;i++){
+        if(test_bit(buf,i)==0){
+            set_bit(buf,i);
+            put_block(dev,bmap,buff);
+            dec(dev,1);
+            return (i+1); // +1 to go back to 1 index for reuse in iget
+        }
+    }
+    return 0; // no block available
+}
+
+// enters a new dir into the parent directory
+int enter_child(MINODE *pip,int ino, char *child){
+    DIR *dp;
+    char *cp;
+    int ideal_len, remain, blk, i;
+    int need_len = 4*((8+strlen(child)+3)/4);
+
+    for(i = 0; i < 12; i++){
+        blk = pip->INODE.i_block[i];
+        if(blk == 0)
+            break;
+        get_block(dev,blk,buff);
+        dp = (DIR *)buff;
+        cp = buff;
+        while(cp + dp->rec_len < buff + BLKSIZE){
+            cp += dp->rec_len;
+            dp = (DIR *)cp;
+        }
+        // dp points at last entry in parent's data block
+        // get the amount of remaining space in the block
+        ideal_len = 4*((8+dp->name_len+3)/4);
+        remain = dp->rec_len - ideal_len;
+        // add the new entry as the last entry
+        if(remain >= need_len){
+            dp->rec_len = ideal_len;
+
+            cp += dp->rec_len;
+            dp = (DIR *)cp;
+
+            dp->inode = ino;
+            dp->rec_len = (BLKSIZE - (cp - buff));
+            dp->name_len = strlen(child);
+            dp->file_type = (char)EXT2_FT_DIR;
+            strcpy(dp->name,child);
+
+            // write the block back to disk
+            put_block(dev, blk, buff);
+            return 1;
+        }
+    }
+
+    // no space left in block, allocate new one
+    blk = balloc(dev);
+    pip->INODE.i_block[i] = blk;
+    pip->INODE.i_size += BLKSIZE;
+    pip->dirty = 1;
+
+    get_block(dev,blk,buff);
+    dp = (DIR *)buff;
+    cp = buff;
+
+    dp->inode = ino;
+    dp->rec_len = BLKSIZE;
+    dp->name_len = strlen(child);
+    dp->file_type = (char)EXT2_FT_DIR;
+    strcpy(dp->name,child);
+
+    put_block(dev,blk,buff);
+    return 1;
+}
+
+int my_mkdir(MINODE *pmip, char *dir){
+    int ino = ialloc(dev);
+    int blk = balloc(dev);
+
+    // create the new inode
+    MINODE *mip = iget(dev,ino); // load the newly allocated inode into mem
+    INODE *ip = &mip->INODE;
+    ip->i_mode = 0x41ED; // DIR type & permissions
+    ip->i_uid = running->uid; // owner uid
+    ip->i_gid = running->pid; // group id
+    ip->i_size = BLKSIZE;
+    ip->i_links_count = 2;
+    ip->i_atime = ip->i_ctime = ip->i_mtime = time(0L);
+    ip->i_blocks = 2;
+    ip->i_block[0] = blk;
+    for(int i = 1; i < 15;i++){
+        ip->i_block[i] = 0;
+    }
+    mip->dirty = 1;
+    iput(mip);
+
+    // create the . and .. dirs for the new inode
+    char buf[BLKSIZE];
+    bzero(buf,BLKSIZE);
+    DIR *dp = (DIR *)buf;
+    // make the . entry
+    dp->inode = ino;
+    dp->rec_len = 12;
+    dp->name_len = 1;
+    dp->name[0] = '.';
+    // make the .. entry
+    dp = (char *)dp + 12;
+    dp->inode = pmip->ino;
+    dp->rec_len = BLKSIZE-12;
+    dp->name_len = 2;
+    dp->name[0] = dp->name[1] = '.';
+    put_block(dev,blk,buf);
+
+    // enter the newly created dir as a dir of the parent
+    enter_child(pmip,ino,dir);
+}
+
+// TODO: mkdir()
+int mkdir(char *pathname){
+    printf("mkdir(): making dir...\n");
+    char *pathCpy;
+    strcpy(pathCpy,pathname);
+
+    char *parent = dirname(pathCpy);
+    char *dir = basename(pathCpy);
+    printf("mkdir(): parent: %s\n",parent);
+    printf("mkdir(): dir: %s\n",dir);
+
+    int pino;
+    if(strcmp(parent,"/")==0){
+        pino = 2;
+    }
+    else{
+        pino = getino(parent);
+    }
+
+    MINODE *pmip = iget(dev,pino);
+    INODE *ip = &pmip->INODE;
+    if(S_ISDIR(ip->i_mode)){
+        int isFound = search(pmip,dir);
+        if(isFound == -1){
+            my_mkdir(pmip,dir);
+        }
+    }
+    pmip->INODE.i_links_count++;
+    pmip->dirty=1;
+}
+
+// TODO: creat()
+int creat(char *filename){
+
+}
+
+// TODO: rmdir()
+int rmdir(char *pathname){
+
+}
+
 int quit(){
+    for(int i = 0 ; i < NMINODE; i++){
+        if(minodes[i].refCount > 0){
+            printf("putting inode..\n");
+            iput(&minodes[i]);
+        }
+    }
     printf("%s\n","Goodbye!\n");
 }
 
@@ -218,7 +429,7 @@ int main(int argc, char *argv[]){
     mount_root();
 
     while(1){
-        printf("Enter a command (cd | pwd | ls | quit): ");
+        printf("Enter a command (cd | pwd | ls | mkdir | quit): ");
         fgets(cmd,CMD_BUFF,stdin);
         int n = strlen(cmd);
         cmd[n-1] = 0;
@@ -240,7 +451,10 @@ int main(int argc, char *argv[]){
             case 2: // ls
                 ls(myargv[1]);
                 break;
-            case 3: // quit
+            case 3: // mkdir
+                mkdir(myargv[1]);
+                break;
+            case 4: // quit
                 quit();
                 exit(1);
                 break;
