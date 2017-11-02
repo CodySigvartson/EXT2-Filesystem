@@ -324,7 +324,7 @@ int balloc(int dev){
     for(int i = 10; i < nblocks;i++){
         if(test_bit(buf,i)==0){
             set_bit(buf,i);
-            put_block(dev,bmap,buff);
+            put_block(dev,bmap,buf);
             dec(dev,1);
             return (i+1); // +1 to go back to 1 index for reuse in iget
         }
