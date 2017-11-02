@@ -1,3 +1,6 @@
+#ifndef L6_H
+#define L6_H
+
 #include <ext2fs/ext2_fs.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -54,3 +57,29 @@ typedef struct mntTable{
   char deviceName[64];
   char mountedDirName[64];
 }MTABLE;
+
+extern MINODE minodes[NMINODE];
+extern MINODE *root;
+extern PROC   proc[NPROC], *running;
+extern MTABLE mtable[4]; 
+
+extern SUPER *sp;
+extern GD    *gp;
+extern INODE *ip;
+
+extern int dev;
+extern int nblocks; // from superblock
+extern int ninodes; // from superblock
+extern int bmap;    // bmap block 
+extern int imap;    // imap block 
+extern int iblock;  // inodes begin block
+
+// device
+extern char *device = "mydisk";
+// block data buff
+extern char buff[BLKSIZE];
+extern char buff2[BLKSIZE];
+// dir names
+extern char *names[64];
+
+#endif

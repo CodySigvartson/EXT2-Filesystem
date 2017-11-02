@@ -21,12 +21,76 @@ int imap;    // imap block
 int iblock;  // inodes begin block
 
 // device
-char *device = "mydisk";
+char *device;
 // block data buff
 char buff[BLKSIZE];
 char buff2[BLKSIZE];
 // dir names
 char *names[64];
+
+// enters a new dir into the parent directory
+int enter_child(MINODE *pip,int ino, char *child){
+    DIR *dp;
+    char *cp;
+    int ideal_len, remain, blk, i;
+    int need_len = 4*((8+strlen(child)+3)/4);
+
+    for(i = 0; i < 12; i++){
+        blk = pip->INODE.i_block[i];
+        if(blk == 0){
+            printf("i %d\n",i);
+            break;
+        }
+        get_block(dev,blk,buff);
+        dp = (DIR *)buff;
+        cp = buff;
+        while(cp + dp->rec_len < buff + BLKSIZE){
+            cp += dp->rec_len;
+            dp = (DIR *)cp;
+        }
+        // dp points at last entry in parent's data block
+        // get the amount of remaining space in the block
+        ideal_len = 4*((8+dp->name_len+3)/4);
+        remain = dp->rec_len - ideal_len;
+        // add the new entry as the last entry
+        if(remain >= need_len){
+            dp->rec_len = ideal_len;
+
+            cp += dp->rec_len;
+            dp = (DIR *)cp;
+
+            dp->inode = ino;
+            dp->rec_len = (BLKSIZE - (cp - buff));
+            dp->name_len = strlen(child);
+            dp->file_type = (char)EXT2_FT_DIR;
+            strcpy(dp->name,child);
+
+            // write the block back to disk
+            put_block(dev, blk, buff);
+            return 1;
+        }
+    }
+
+    // no space left in block, allocate new one
+    blk = balloc(dev);
+    pip->INODE.i_block[i] = blk;
+    pip->INODE.i_size += BLKSIZE;
+    pip->dirty = 1;
+
+    get_block(dev,blk,buff);
+    dp = (DIR *)buff;
+    cp = buff;
+
+    dp->inode = ino;
+    dp->rec_len = BLKSIZE;
+    dp->name_len = strlen(child);
+    dp->file_type = (char)EXT2_FT_DIR;
+    strcpy(dp->name,child);
+
+    put_block(dev,blk,buff);
+    return 1;
+}
+
 
 // tokenize a path into dir names
 int tokenize(char *path){
@@ -232,6 +296,40 @@ int getino(char *pathname)
     iput(mip);
 
     return ino;
+}
+
+// allocates an inode on device
+int ialloc(int dev){
+    char buf[BLKSIZE];
+    // get imap block
+    get_block(dev,imap,buf);
+    for(int i = 0; i < ninodes; i++){
+        if(test_bit(buf,i)==0){
+            set_bit(buf,i);
+            put_block(dev,imap,buf);
+            dec(dev,0);
+            printf("inode alloc at: %d\n",i+1);
+            return (i+1); // +1 to go back to 1 index for reuse in iget
+        }
+    }
+    printf("no inodes!!!\n");
+    return 0; // no free inodes available
+}
+
+// allocates a free disk block on device
+int balloc(int dev){
+    char buf[BLKSIZE];
+    // get block bitmap
+    get_block(dev,bmap,buf);
+    for(int i = 10; i < nblocks;i++){
+        if(test_bit(buf,i)==0){
+            set_bit(buf,i);
+            put_block(dev,bmap,buff);
+            dec(dev,1);
+            return (i+1); // +1 to go back to 1 index for reuse in iget
+        }
+    }
+    return 0; // no block available
 }
 
 // mounts the root of the filesystem from the device
