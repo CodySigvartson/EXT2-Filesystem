@@ -4,6 +4,8 @@
         "stat.h": "c",
         "stdio.h": "c",
         "stdlib.h": "c",
-        "fcntl.h": "c"
+        "fcntl.h": "c",
+        "unistd.h": "c",
+        "l7.h": "c"
     }
 }
