@@ -1,9 +1,14 @@
 #ifndef L7_H
 #define L7_H
 
-#include <ext2fs/ext2_fs.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <fcntl.h>
+#include <unistd.h>
+#include <ext2fs/ext2_fs.h>
+#include <string.h>
+#include <libgen.h>
+#include <sys/stat.h>
 
 typedef unsigned char  u8;
 typedef unsigned short u16;
@@ -21,6 +26,8 @@ typedef struct ext2_dir_entry_2 DIR;
 #define NMINODE      100
 #define NFD           16
 #define NPROC          2
+
+#define CMD_BUFF 128
 
 typedef struct minode{
   INODE INODE;
@@ -81,5 +88,7 @@ extern char buff[BLKSIZE];
 extern char buff2[BLKSIZE];
 // dir names
 extern char *names[64];
+// cmd args
+extern char *myargv[64];
 
 #endif

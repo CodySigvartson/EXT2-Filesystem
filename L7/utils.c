@@ -1,32 +1,72 @@
-/* Utilitiy functions for EXT2 Filesystem */
+/*
+* Utilitiy functions for EXT2 Filesystem
+*/
 #include "l7.h"
-#include <ext2fs/ext2_fs.h>
-#include <stdio.h>
-#include <fcntl.h>
 
-MINODE minodes[NMINODE];
-MINODE *root;
-PROC   proc[NPROC], *running;
-MTABLE mtable[4]; 
 
-SUPER *sp;
-GD    *gp;
-INODE *ip;
+// increment number of free inodes or blocks
+// blktype: 0 - inode, 1 - block
+int inc(int dev, int blktype){
+    get_block(dev,SBLK,buff2);
+    sp = (SUPER *)buff2;
+    if(blktype == 0)
+        sp->s_free_inodes_count++;
+    else if(blktype == 1)
+        sp->s_free_blocks_count++;
+    put_block(dev,SBLK,buff2);
+    get_block(dev,GDBLK,buff2);
+    gp = (GD *)buff2;
+    if(blktype == 0)
+        gp->bg_free_inodes_count++;
+    else if(blktype == 1)
+        gp->bg_free_blocks_count++;
+    put_block(dev,GDBLK,buff2);
+}
 
-int dev;
-int nblocks; // from superblock
-int ninodes; // from superblock
-int bmap;    // bmap block 
-int imap;    // imap block 
-int iblock;  // inodes begin block
+// deallocate an inode
+int idalloc(int dev,int ino){
+    int i;
+    if(ino > ninodes){
+        printf("inumber %d out of range \n",ino);
+        return;
+    }
+    get_block(dev,imap,buff2);
+    clear_bit(buff2,ino-1);
+    put_block(dev,imap,buff2);
+    inc(dev,0);
+}
 
-// device
-char *device;
-// block data buff
-char buff[BLKSIZE];
-char buff2[BLKSIZE];
-// dir names
-char *names[64];
+// deallocate a block
+int bdalloc(int dev,int blkno){
+    int i;
+    if(blkno > nblocks){
+        printf("inumber %d out of range \n",blkno);
+        return;
+    }
+    get_block(dev,bmap,buff2);
+    clear_bit(buff2,blkno-1);
+    put_block(dev,bmap,buff2);
+    inc(dev,1);
+}
+
+// decrement number of free inodes or blocks
+// blktype: 0 - inode, 1 - block
+int dec(int dev, int blktype){
+    get_block(dev, SBLK, buff);
+    sp = (SUPER *)buff;
+    if(blktype == 0)
+        sp->s_free_inodes_count--;
+    else if(blktype == 1)
+        sp->s_free_blocks_count--;
+    put_block(dev,SBLK,buff);
+    get_block(dev,GDBLK,buff);
+    gp = (GD *)buff;
+    if(blktype == 0)
+        gp->bg_free_inodes_count--;
+    else if(blktype == 1)
+        gp->bg_free_blocks_count--;
+    put_block(dev,GDBLK,buff);
+}
 
 // enters a new dir into the parent directory
 int enter_child(MINODE *pip,int ino, char *child){

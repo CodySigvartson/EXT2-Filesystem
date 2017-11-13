@@ -1,30 +1,10 @@
 #include "l7.h"
 
-MINODE minodes[NMINODE];
-MINODE *root;
-PROC   proc[NPROC], *running;
-MTABLE mtable[4]; 
-
-SUPER *sp;
-GD    *gp;
-INODE *ip;
-
-int dev;
-int nblocks; // from superblock
-int ninodes; // from superblock
-int bmap;    // bmap block 
-int imap;    // imap block 
-int iblock;  // inodes begin block
-
-// device
-char *device;
-// block data buff
-char buff[BLKSIZE];
-char buff2[BLKSIZE];
-// dir names
-char *names[64];
-
+// creates the new dir with proper permissions
+// pmip: parent inode to add new dir as child of
+// dir: name of new dir to create
 int my_mkdir_util(MINODE *pmip, char *dir){
+    // allocate a new block and inode location on disk
     int ino = ialloc(dev);
     int blk = balloc(dev);
 
@@ -70,16 +50,18 @@ int my_mkdir_util(MINODE *pmip, char *dir){
 int my_mkdir(char *pathname){
     if(!pathname)
         return -1;
-    char parentPathCpy[128], dirPathCpy[128];
-    strcpy(parentPathCpy,pathname);
-    strcpy(dirPathCpy,pathname);
+    char path_buff[128], dir_buff[128];
+    strcpy(path_buff,pathname);
+    strcpy(dir_buff,pathname);
 
-    char *parent = dirname(parentPathCpy);
-    char *dir = basename(dirPathCpy);
+    // split the pathname for the new dir into path and base
+    char *parent = dirname(path_buff);
+    char *dir = basename(dir_buff);
     printf("mkdir(): parent: %s\n",parent);
     printf("mkdir(): dir: %s\n",dir);
 
     int pino;
+    // check if starting from root or cwd
     if(strcmp(parent,"/")==0){
         pino = 2;
     }
@@ -90,9 +72,11 @@ int my_mkdir(char *pathname){
         pino = getino(parent);
     }
 
+    // check that the parent of the new dir is DIR type
     MINODE *pmip = iget(dev,pino);
     INODE *ip = &pmip->INODE;
     if(S_ISDIR(ip->i_mode)){
+        // check if the parent dir already contains dir being made
         int isFound = search(pmip,dir);
         if(isFound == -1){
             my_mkdir_util(pmip,dir);
@@ -100,4 +84,5 @@ int my_mkdir(char *pathname){
     }
     pmip->INODE.i_links_count++;
     pmip->dirty=1;
+    iput(pmip);
 }

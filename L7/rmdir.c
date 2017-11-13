@@ -1,29 +1,5 @@
 #include "l7.h"
 
-MINODE minodes[NMINODE];
-MINODE *root;
-PROC   proc[NPROC], *running;
-MTABLE mtable[4]; 
-
-SUPER *sp;
-GD    *gp;
-INODE *ip;
-
-int dev;
-int nblocks; // from superblock
-int ninodes; // from superblock
-int bmap;    // bmap block 
-int imap;    // imap block 
-int iblock;  // inodes begin block
-
-// device
-char *device;
-// block data buff
-char buff[BLKSIZE];
-char buff2[BLKSIZE];
-// dir names
-char *names[64];
-
 int my_rmdir(char *pathname){
     if(!pathname){
         printf("Please provide a pathname for the directory to remove\n");
@@ -81,7 +57,7 @@ int my_rmdir(char *pathname){
     // remove the dir from parent's data block
     MINODE *pmip = iget(dev,pino);
 
-    rm_child(pmip, dir);
+    rm_child(pmip,ino,dir);
     bdalloc(dev,ip->i_block[0]);
     idalloc(dev,mip->ino);
     iput(mip);
@@ -91,7 +67,7 @@ int my_rmdir(char *pathname){
     iput(pmip);
 }
 
-int rm_child(MINODE *pmip, char *name){
+int rm_child(MINODE *pmip, int ino, char *name){
     int i,blk;
     int found = 0;
     DIR *dp,*dpend,*prev;
@@ -112,7 +88,7 @@ int rm_child(MINODE *pmip, char *name){
                 strcpy(dir,dp->name);
                 dir[dp->name_len]=0;
                 printf("name: %s dirname: %s\n",name,dir);
-                if(strcmp(name, dir)==0){
+                if(strcmp(name, dir)==0 && ino == dp->inode){
                     printf("rm_child(): found dir to remove in the data block\n");
                     found = 1;
                     break;
