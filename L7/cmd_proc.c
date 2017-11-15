@@ -1,7 +1,7 @@
 #include "l7.h"
 
 // possible commands
-char *cmds[] = {"cd","pwd","ls","mkdir","rmdir","creat","link","unlink","quit"};
+char *cmds[] = {"cd","pwd","ls","mkdir","rmdir","creat","link","unlink","symlink","readlink","quit"};
 // user input (command, command buffer)
 char cmd[CMD_BUFF], cmdbuff[CMD_BUFF];
 char *myargv[64];

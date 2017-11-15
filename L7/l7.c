@@ -8,6 +8,8 @@
 #include "creat.c"
 #include "link.c"
 #include "unlink.c"
+#include "symlink.c"
+#include "readlink.c"
 #include "bitmanip.c"
 #include "cmd_proc.c"
 
@@ -52,7 +54,8 @@ int main(int argc, char *argv[]){
     mount_root();
 
     while(1){
-        printf("Enter a command (cd | pwd | ls | mkdir | creat | rmdir | link | unlink | quit): ");
+        printf("Enter a command (cd | pwd | ls | mkdir | creat | rmdir | link | unlink\n");
+        printf("| symlink | readlink | quit): ");
         fgets(cmd,CMD_BUFF,stdin);
         int n = strlen(cmd);
         cmd[n-1] = 0;
@@ -85,7 +88,6 @@ int main(int argc, char *argv[]){
                 my_creat(myargv[1]);
                 break;
             case 6: // link
-                printf("myargv[1]: %s myargv[2]: %s\n",myargv[1],myargv[2]);
                 if(myargv[1] && myargv[2])
                     my_link(myargv[1],myargv[2]);
                 else
@@ -94,7 +96,20 @@ int main(int argc, char *argv[]){
             case 7: // unlink
                 my_unlink(myargv[1]);
                 break;
-            case 8: // quit
+            case 8: // symlink
+                if(myargv[1] && myargv[2])
+                    my_symlink(myargv[1],myargv[2]);
+                else
+                    printf("(HELP) symlink command: symlink old_file new_file\n");
+                break;
+            case 9: // readlink
+            {
+                char *buffer = malloc(128*sizeof(char));
+                if(my_readlink(myargv[1],buffer)>=0)
+                    printf("link: %s\n",buffer);
+                break;
+            }
+            case 10: // quit
                 quit();
                 exit(1);
                 break;
