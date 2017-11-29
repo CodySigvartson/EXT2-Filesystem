@@ -83,5 +83,5 @@ int ls_file(int ino){
 
     // uid and gid
     printf("%3hu%3hu%3hu%8d",ip->i_links_count,ip->i_uid,ip->i_gid,ip->i_size);
-
+    // need time
 }
