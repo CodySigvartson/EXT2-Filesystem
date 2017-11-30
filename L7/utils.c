@@ -3,9 +3,10 @@
 */
 #include "l7.h"
 
-
-// increment number of free inodes or blocks
+/////////////////////////////////////////////////////////////////////////
+// inc() increment number of free inodes or blocks
 // blktype: 0 - inode, 1 - block
+/////////////////////////////////////////////////////////////////////////
 int inc(int dev, int blktype){
     get_block(dev,SBLK,buff2);
     sp = (SUPER *)buff2;
@@ -23,7 +24,9 @@ int inc(int dev, int blktype){
     put_block(dev,GDBLK,buff2);
 }
 
-// deallocate an inode
+/////////////////////////////////////////////////////////////////////////
+// idalloc() deallocate an inode
+/////////////////////////////////////////////////////////////////////////
 int idalloc(int dev,int ino){
     int i;
     if(ino > ninodes){
@@ -36,7 +39,9 @@ int idalloc(int dev,int ino){
     inc(dev,0);
 }
 
-// deallocate a block
+/////////////////////////////////////////////////////////////////////////
+// bdalloc() deallocate a block
+/////////////////////////////////////////////////////////////////////////
 int bdalloc(int dev,int blkno){
     int i;
     if(blkno > nblocks){
@@ -49,8 +54,10 @@ int bdalloc(int dev,int blkno){
     inc(dev,1);
 }
 
-// decrement number of free inodes or blocks
+/////////////////////////////////////////////////////////////////////////
+// dec() decrement number of free inodes or blocks
 // blktype: 0 - inode, 1 - block
+/////////////////////////////////////////////////////////////////////////
 int dec(int dev, int blktype){
     get_block(dev, SBLK, buff);
     sp = (SUPER *)buff;
@@ -68,7 +75,9 @@ int dec(int dev, int blktype){
     put_block(dev,GDBLK,buff);
 }
 
-// enters a new dir into the parent directory
+/////////////////////////////////////////////////////////////////////////
+// enter_child() enters a new dir into the parent directory
+/////////////////////////////////////////////////////////////////////////
 int enter_child(MINODE *pip,int ino, char *child){
     DIR *dp;
     char *cp;
@@ -131,8 +140,9 @@ int enter_child(MINODE *pip,int ino, char *child){
     return 1;
 }
 
-
-// tokenize a path into dir names
+/////////////////////////////////////////////////////////////////////////
+// tokenize() tokenize a path into dir names
+/////////////////////////////////////////////////////////////////////////
 int tokenize(char *path){
     char *temp = strtok(path,"/");
     names[0] = temp;
@@ -144,20 +154,26 @@ int tokenize(char *path){
     names[i] = 0;
 }
 
+/////////////////////////////////////////////////////////////////////////
 // get_block() reads a disk block into a buf[ ]
+/////////////////////////////////////////////////////////////////////////
 int get_block(int dev, int blk, char *buf)
 {
     lseek(dev, (long)blk*BLKSIZE, SEEK_SET);
     return read(dev, buf, BLKSIZE);
 }
 
-// writes a block to disk
+/////////////////////////////////////////////////////////////////////////
+// put_block() writes a block to disk
+/////////////////////////////////////////////////////////////////////////
 int put_block(int dev, int blk, char *buf){
     lseek(dev,(long)blk*BLKSIZE,SEEK_SET);
     write(dev,buf,BLKSIZE);
 }
 
-// searches for filename in given DIR
+/////////////////////////////////////////////////////////////////////////
+// search() searches for filename in given DIR
+/////////////////////////////////////////////////////////////////////////
 int search(MINODE *mip, char *name){
     printf("search(): searching for file: %s...\n",name);
     int blk;
@@ -189,7 +205,9 @@ int search(MINODE *mip, char *name){
     return -1;
 }
 
-// checks if an minode already exists in memory
+/////////////////////////////////////////////////////////////////////////
+// minodeExists() checks if an minode already exists in memory
+/////////////////////////////////////////////////////////////////////////
 int minodeExists(int dev, int ino){
     //printf("minodeExists(): checking if inode exists in memory...\n");
     for(int i = 0; i < NMINODE; i++){
@@ -200,7 +218,9 @@ int minodeExists(int dev, int ino){
     return -1;
 }
 
-// check for an unused minode
+/////////////////////////////////////////////////////////////////////////
+// minodeRef() check for an unused minode
+/////////////////////////////////////////////////////////////////////////
 int minodeRef(){
     //printf("minodeRef(): looking for unused location in memory...\n");
     for(int i = 0; i < NMINODE; i++){
@@ -211,7 +231,9 @@ int minodeRef(){
     return -1;
 }
 
-// gets an INODE from the device
+/////////////////////////////////////////////////////////////////////////
+// iget() gets an INODE from the device
+/////////////////////////////////////////////////////////////////////////
 MINODE *iget(int dev, int ino){
     //printf("iget(): getting inode from device...\n");
     // search if the minode is already in use
@@ -252,7 +274,9 @@ MINODE *iget(int dev, int ino){
     return &minodes[unused];
 }
 
-// writes an minode back to its disk
+/////////////////////////////////////////////////////////////////////////
+// iput() writes an minode back to its disk
+/////////////////////////////////////////////////////////////////////////
 int iput(MINODE *mip){
     printf("writing inode back to disk...\n");
     int block, offset;
@@ -284,6 +308,9 @@ int iput(MINODE *mip){
     printf("write back to disk succeeded\n");
 }
 
+/////////////////////////////////////////////////////////////////////////
+// getino()
+/////////////////////////////////////////////////////////////////////////
 int getino(char *pathname)
 {
     int i, ino, blk, disp;
@@ -338,7 +365,9 @@ int getino(char *pathname)
     return ino;
 }
 
-// allocates an inode on device
+/////////////////////////////////////////////////////////////////////////
+// ialloc() allocates an inode on device
+/////////////////////////////////////////////////////////////////////////
 int ialloc(int dev){
     char buf[BLKSIZE];
     // get imap block
@@ -356,7 +385,9 @@ int ialloc(int dev){
     return 0; // no free inodes available
 }
 
-// allocates a free disk block on device
+/////////////////////////////////////////////////////////////////////////
+// balloc() allocates a free disk block on device
+/////////////////////////////////////////////////////////////////////////
 int balloc(int dev){
     char buf[BLKSIZE];
     // get block bitmap
@@ -372,7 +403,9 @@ int balloc(int dev){
     return 0; // no block available
 }
 
-// mounts the root of the filesystem from the device
+/////////////////////////////////////////////////////////////////////////
+// mount_root() mounts the root of the filesystem from the device
+/////////////////////////////////////////////////////////////////////////
 int mount_root(){
     printf("ATTEMPTING TO MOUNT FILESYSTEM...\n");
     // open the disk
@@ -433,7 +466,9 @@ int mount_root(){
     printf("EXT2 FILESYSTEM MOUNTED SUCCESFULLY\n\n");
 }
 
-// initializes FS data structures
+/////////////////////////////////////////////////////////////////////////
+// init() initializes FS data structures
+/////////////////////////////////////////////////////////////////////////
 int init(){
     printf("Initializing FS data structures...\n");
     // initialize all minodes

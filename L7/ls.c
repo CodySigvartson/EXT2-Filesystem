@@ -1,7 +1,7 @@
 #include "l7.h"
 
 /////////////////////////////////////////////////////////////////////////
-// ls() function
+// ls() list all dirs
 /////////////////////////////////////////////////////////////////////////
 int ls(char *dirname){
     int ino;
@@ -34,6 +34,9 @@ int ls(char *dirname){
     }
 }
 
+/////////////////////////////////////////////////////////////////////////
+// ls_file() list all files
+/////////////////////////////////////////////////////////////////////////
 int ls_file(int ino){
     MINODE *mip = iget(dev,ino);
     INODE *ip = &mip->INODE;
@@ -86,5 +89,5 @@ int ls_file(int ino){
 
     // uid and gid
     printf("%3hu%3hu%3hu%8d",ip->i_links_count,ip->i_uid,ip->i_gid,ip->i_size);
-    // need time
+
 }

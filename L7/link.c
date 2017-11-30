@@ -1,6 +1,8 @@
 #include "l7.h"
 
-// creates a hard link between two files
+/////////////////////////////////////////////////////////////////////////
+// my_link() creates a hard link between two files
+/////////////////////////////////////////////////////////////////////////
 int my_link(char *old_file, char *new_file){
     printf("link(): linking file %s to %s\n",new_file,old_file);
     char path_buff[128], file_buff[128];

@@ -1,8 +1,11 @@
 #include "l7.h"
 
+/////////////////////////////////////////////////////////////////////////
+// my_mkdir_util()
 // creates the new dir with proper permissions
 // pmip: parent inode to add new dir as child of
 // dir: name of new dir to create
+/////////////////////////////////////////////////////////////////////////
 int my_mkdir_util(MINODE *pmip, char *dir){
     // allocate a new block and inode location on disk
     int ino = ialloc(dev);
@@ -46,7 +49,10 @@ int my_mkdir_util(MINODE *pmip, char *dir){
     enter_child(pmip,ino,dir);
 }
 
+/////////////////////////////////////////////////////////////////////////
+// my_mkdir()
 // makes a directory in the filesystem
+/////////////////////////////////////////////////////////////////////////
 int my_mkdir(char *pathname){
     if(!pathname)
         return -1;

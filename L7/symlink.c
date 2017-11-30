@@ -1,5 +1,8 @@
 #include "l7.h"
 
+/////////////////////////////////////////////////////////////////////////
+// my_symlink_util()
+/////////////////////////////////////////////////////////////////////////
 int my_symlink_util(MINODE *pmip,char *old_file, char *file){
     // allocate a location for the new file
     int ino = ialloc(dev);
@@ -22,6 +25,9 @@ int my_symlink_util(MINODE *pmip,char *old_file, char *file){
     enter_child(pmip,ino,file);
 }
 
+/////////////////////////////////////////////////////////////////////////
+// my_symlink()
+/////////////////////////////////////////////////////////////////////////
 int my_symlink(char *old_file, char *new_file){
     char path_buff[128], file_buff[128];
     strcpy(path_buff,new_file);
