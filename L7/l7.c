@@ -12,6 +12,8 @@
 #include "readlink.c"
 #include "bitmanip.c"
 #include "cmd_proc.c"
+#include "chmod.c"
+#include "touch.c"
 
 MINODE minodes[NMINODE];
 MINODE *root;
@@ -61,7 +63,7 @@ int main(int argc, char *argv[]){
 
     while(1){
         printf("Enter a command (cd | pwd | ls | mkdir | creat | rmdir | link | unlink\n");
-        printf("| symlink | readlink | quit): ");
+        printf("| symlink | readlink | chmod [mode] [file] | touch | quit): ");
         fgets(cmd,CMD_BUFF,stdin);
         int n = strlen(cmd);
         cmd[n-1] = 0;
@@ -115,7 +117,17 @@ int main(int argc, char *argv[]){
                     printf("link: %s\n",buffer);
                 break;
             }
-            case 10: // quit
+            case 10: // chmod
+                if(myargv[0] && myargv[1] && myargv[2]){
+                    printf("calling mychmod\n");
+                    my_chmod(myargv[1],myargv[2]);
+                }
+                break;
+            case 11: // touch
+                if(myargv[0] && myargv[1])
+                    my_touch(myargv[1]);
+                break;
+            case 12: // quit
                 quit();
                 exit(1);
                 break;

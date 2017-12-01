@@ -9,6 +9,7 @@
 #include <string.h>
 #include <libgen.h>
 #include <sys/stat.h>
+#include <time.h>
 
 typedef unsigned char  u8;
 typedef unsigned short u16;
