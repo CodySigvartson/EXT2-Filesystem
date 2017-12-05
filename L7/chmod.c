@@ -1,8 +1,12 @@
 #include "l7.h"
 
+/////////////////////////////////////////////////////////////////////////
+// my_chmod() change file/dir mode
+// return ino of the file in the pathname
+/////////////////////////////////////////////////////////////////////////
 int my_chmod(char *mode, char *pathname){
-    int ino = getino(pathname);
-    MINODE *mip = iget(dev,ino);
+    int ino = getino(pathname); // get inode num.
+    MINODE *mip = iget(dev,ino); // put that inode content in the memory.
     INODE *ip = &mip->INODE;
 
     // clear current permissions
@@ -45,5 +49,5 @@ int my_chmod(char *mode, char *pathname){
             break;
     }
     mip->dirty = 1;
-    iput(mip);
+    iput(mip); // write back to disk.
 }

@@ -260,10 +260,10 @@ MINODE *iget(int dev, int ino){
         return NULL;
     }
 
-
+    // mailman alg.
     // get location of inode on device
-    int blk = (ino - 1)/8 + 10;
-    int offset = (ino - 1) % 8;
+    int blk = (ino - 1)/8 + 10; // <-----------------------------------mailman alg.
+    int offset = (ino - 1) % 8; // <-----------------------------------mailman alg.
     //printf("iget(): inode location %d on block %d\n",offset,blk);
 
     get_block(dev,blk,buff);

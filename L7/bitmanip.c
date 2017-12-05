@@ -13,19 +13,22 @@ Operator	Description																													Example
 // test_bit() test bit value
 /////////////////////////////////////////////////////////////////////////
 int test_bit(char *buf, int bit){
-    return buf[bit/8] & (1 << (bit % 8)); // bits operator (and) see above. <------------------------------need more comments here.
+    return buf[bit/8] & (1 << (bit % 8)); // bits operator (and) see above.
+	       // get location of imap/bmap & the value to end with.
 }
 
 /////////////////////////////////////////////////////////////////////////
 // set_bit() set bit value
 /////////////////////////////////////////////////////////////////////////
 int set_bit(char *buf, int bit){
-    buf[bit/8] |= (1 << (bit % 8)); // bits operator (or) see above. <------------------------------need more comments here.
+    buf[bit/8] |= (1 << (bit % 8)); // bits operator (or) see above.
+    // get location of imap/bmap |= the value to end with.
 }
 
 /////////////////////////////////////////////////////////////////////////
 // clear_bit() clear any bit to 0
 /////////////////////////////////////////////////////////////////////////
 int clear_bit(char *buf, int bit){
-    buf[bit/8] &= ~(1 << (bit % 8)); // bits operator (not) see above. <------------------------------need more comments here.
+    buf[bit/8] &= ~(1 << (bit % 8)); // bits operator (not) see above.
+    // get location of imap/bmap assign the value to end with.
 }

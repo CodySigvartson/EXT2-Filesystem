@@ -2,7 +2,7 @@
 
 /////////////////////////////////////////////////////////////////////////
 // cd() change cwd to pathname
-// return ino
+// return ino of the file in the pathname
 /////////////////////////////////////////////////////////////////////////
 int cd(char *pathname){
     int ino;
@@ -15,7 +15,7 @@ int cd(char *pathname){
         ino = getino(pathname);
         printf("cd(): ino found at %d",ino, running->cwd->ino);
     }
-    MINODE *mip = iget(dev,ino);
+    MINODE *mip = iget(dev,ino); // MINODE inode in memory.
     if(S_ISDIR(mip->INODE.i_mode)){
         printf("cd(): inode is DIR...\n");
         iput(running->cwd);
