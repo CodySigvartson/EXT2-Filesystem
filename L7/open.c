@@ -71,7 +71,7 @@ int my_open(char *pathname, int flag){
                     ip->i_atime = time(0L);
                 else
                     ip->i_atime = ip->i_mtime = time(0L);
-
+                mip->lock = 0; // unlock
                 return fd;
             }
         }

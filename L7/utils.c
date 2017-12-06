@@ -10,9 +10,9 @@
 int inc(int dev, int blktype){
     get_block(dev,SBLK,buff2);
     sp = (SUPER *)buff2;
-    if(blktype == 0)
+    if(blktype == 0) // inode block
         sp->s_free_inodes_count++;
-    else if(blktype == 1)
+    else if(blktype == 1) // disk block
         sp->s_free_blocks_count++;
     put_block(dev,SBLK,buff2);
     get_block(dev,GDBLK,buff2);
@@ -61,9 +61,9 @@ int bdalloc(int dev,int blkno){
 int dec(int dev, int blktype){
     get_block(dev, SBLK, buff);
     sp = (SUPER *)buff;
-    if(blktype == 0)
+    if(blktype == 0) // inode block
         sp->s_free_inodes_count--;
-    else if(blktype == 1)
+    else if(blktype == 1) // disk block
         sp->s_free_blocks_count--;
     put_block(dev,SBLK,buff);
     get_block(dev,GDBLK,buff);
@@ -82,7 +82,7 @@ int enter_child(MINODE *pip,int ino, char *child){
     DIR *dp;
     char *cp;
     int ideal_len, remain, blk, i;
-    int need_len = 4*((8+strlen(child)+3)/4);
+    int need_len = 4*((8+strlen(child)+3)/4); // length needed to enter child (multiple of 4)
 
     for(i = 0; i < 12; i++){
         blk = pip->INODE.i_block[i];
@@ -103,11 +103,12 @@ int enter_child(MINODE *pip,int ino, char *child){
         remain = dp->rec_len - ideal_len;
         // add the new entry as the last entry
         if(remain >= need_len){
+            // set the last dir's new length to its ideal length
             dp->rec_len = ideal_len;
-
+            // advance to end of last dir
             cp += dp->rec_len;
             dp = (DIR *)cp;
-
+            // add new child
             dp->inode = ino;
             dp->rec_len = (BLKSIZE - (cp - buff));
             dp->name_len = strlen(child);

@@ -15,6 +15,7 @@
 #include "chmod.c"
 #include "touch.c"
 #include "open.c"
+#include "close.c"
 
 MINODE minodes[NMINODE];
 MINODE *root;
@@ -64,7 +65,8 @@ int main(int argc, char *argv[]){
 
     while(1){
         printf("Enter a command (cd | pwd | ls | mkdir | creat | rmdir | link | unlink\n");
-        printf("| symlink | readlink | chmod [mode] [file] | touch | open [file] [mode] | quit): ");
+        printf("| symlink | readlink | chmod [mode] [file] | touch | open [file] [mode] |\ 
+        close [fd] | quit): ");
         fgets(cmd,CMD_BUFF,stdin);
         int n = strlen(cmd);
         cmd[n-1] = 0;
@@ -137,7 +139,11 @@ int main(int argc, char *argv[]){
                         printf("(HELP) open command: open [file] [0,1,2,3]\n");
                 }
                 break;
-            case 13: // quit
+            case 13: // close
+                if(myargv[1])
+                    my_close(atoi(myargv[1]));
+                break;
+            case 14: // quit
                 quit();
                 exit(1);
                 break;
