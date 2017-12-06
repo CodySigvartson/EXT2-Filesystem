@@ -14,6 +14,7 @@
 #include "cmd_proc.c"
 #include "chmod.c"
 #include "touch.c"
+#include "open.c"
 
 MINODE minodes[NMINODE];
 MINODE *root;
@@ -63,7 +64,7 @@ int main(int argc, char *argv[]){
 
     while(1){
         printf("Enter a command (cd | pwd | ls | mkdir | creat | rmdir | link | unlink\n");
-        printf("| symlink | readlink | chmod [mode] [file] | touch | quit): ");
+        printf("| symlink | readlink | chmod [mode] [file] | touch | open [file] [mode] | quit): ");
         fgets(cmd,CMD_BUFF,stdin);
         int n = strlen(cmd);
         cmd[n-1] = 0;
@@ -110,13 +111,12 @@ int main(int argc, char *argv[]){
                 else
                     printf("(HELP) symlink command: symlink old_file new_file\n");
                 break;
-            case 9: // readlink
-            {
-                char *buffer = malloc(128*sizeof(char));
-                if(my_readlink(myargv[1],buffer)>=0)
-                    printf("link: %s\n",buffer);
+            case 9:{ // readlink
+                    char *buffer = malloc(128*sizeof(char));
+                    if(my_readlink(myargv[1],buffer)>=0)
+                        printf("link: %s\n",buffer);
+                }
                 break;
-            }
             case 10: // chmod
                 if(myargv[0] && myargv[1] && myargv[2]){
                     printf("calling mychmod\n");
@@ -127,7 +127,17 @@ int main(int argc, char *argv[]){
                 if(myargv[0] && myargv[1])
                     my_touch(myargv[1]);
                 break;
-            case 12: // quit
+            case 12:{ // open
+                    if(myargv[1] && myargv[2]){
+                        int mode = atoi(myargv[2]);
+                        int fd = my_open(myargv[1],mode);
+                        printf("file opened at fd: %d\n",fd);
+                    }   
+                    else
+                        printf("(HELP) open command: open [file] [0,1,2,3]\n");
+                }
+                break;
+            case 13: // quit
                 quit();
                 exit(1);
                 break;
