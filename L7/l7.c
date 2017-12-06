@@ -16,6 +16,7 @@
 #include "touch.c"
 #include "open.c"
 #include "close.c"
+#include "read.c"
 
 MINODE minodes[NMINODE];
 MINODE *root;
@@ -42,6 +43,8 @@ char buff2[BLKSIZE];
 char *names[64];
 // cmd args
 char *myargv[64];
+// read file buff
+char read_buff[BLKSIZE];
 
 /////////////////////////////////////////////////////////////////////////
 // quit() for any changes write it back into mydisk then quit.
@@ -64,9 +67,9 @@ int main(int argc, char *argv[]){
     mount_root();
 
     while(1){
-        printf("Enter a command (cd | pwd | ls | mkdir | creat | rmdir | link | unlink\n");
-        printf("| symlink | readlink | chmod [mode] [file] | touch | open [file] [mode] |\ 
-        close [fd] | quit): ");
+        printf("Level 1: cd | pwd | ls | mkdir | creat | rmdir | link | unlink | symlink | readlink | chmod [mode] [file] | touch\n");
+        printf("Level 2: open [file] [mode] | close [fd] | read [fd] [nbytes] [space] | write [fd] [nbytes] | quit\n");
+        printf("Enter a command: ");
         fgets(cmd,CMD_BUFF,stdin);
         int n = strlen(cmd);
         cmd[n-1] = 0;
@@ -143,7 +146,16 @@ int main(int argc, char *argv[]){
                 if(myargv[1])
                     my_close(atoi(myargv[1]));
                 break;
-            case 14: // quit
+            case 14: // read
+                if(myargv[1] && myargv[2] && myargv[3]){
+                    my_read(atoi(myargv[1]),read_buff,atoi(myargv[2]),atoi(myargv[3]));
+                }
+                break;
+            case 15: // write
+                if(myargv[1] && myargv[2])
+                    //my_write(atoi(myargv[1]),atoi(myargv[2]));
+                break;
+            case 16: // quit
                 quit();
                 exit(1);
                 break;

@@ -28,6 +28,11 @@ typedef struct ext2_dir_entry_2 DIR;
 #define NFD           16
 #define NPROC          2
 
+#define READ_MODE 0
+#define WRITE_MODE 1
+#define RW_MODE 2
+#define APPEND_MODE 3
+
 #define CMD_BUFF 128
 
 typedef struct minode{

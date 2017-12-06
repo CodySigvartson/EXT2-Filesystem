@@ -30,17 +30,17 @@ int my_open(char *pathname, int flag){
                 OFT *oftp = malloc(sizeof(OFT));
                 int byteOffset;
                 switch(flag){
-                    case 0: //r
+                    case READ_MODE: //r
                         byteOffset = 0;
                         break;
-                    case 1: //w
+                    case WRITE_MODE: //w
                         wipe_contents(ip);
                         byteOffset = 0;
                         break;
-                    case 2: //rw
+                    case RW_MODE: //rw
                         byteOffset = 0;
                         break;
-                    case 3: //append (w with offset=file_size)
+                    case APPEND_MODE: //append (w with offset=file_size)
                         byteOffset = ip->i_size;
                         break;
                     default:
