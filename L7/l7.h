@@ -36,6 +36,7 @@ typedef struct minode{
   int refCount;
   int dirty;
   int mounted;
+  int lock; // for my_close()
   struct mntTable *mptr;
 }MINODE;
 

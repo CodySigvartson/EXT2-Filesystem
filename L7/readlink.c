@@ -1,6 +1,8 @@
 #include "l7.h"
 
-// reads a target file name symbolic link field
+/////////////////////////////////////////////////////////////////////////
+// my_readlink() reads a target file name symbolic link field
+/////////////////////////////////////////////////////////////////////////
 int my_readlink(char *file, char *buffer){
     int ino = getino(file);
     MINODE *mip = iget(dev,ino);
