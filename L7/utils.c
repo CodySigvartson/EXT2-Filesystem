@@ -5,7 +5,8 @@
 
 /////////////////////////////////////////////////////////////////////////
 // inc() increment number of free inodes or blocks
-// blktype: 0 - inode, 1 - block
+//       blktype: 0 - inode, 1 - block
+// return: none
 /////////////////////////////////////////////////////////////////////////
 int inc(int dev, int blktype){
     get_block(dev,SBLK,buff2);
@@ -26,6 +27,7 @@ int inc(int dev, int blktype){
 
 /////////////////////////////////////////////////////////////////////////
 // idalloc() deallocate an inode
+// return: none
 /////////////////////////////////////////////////////////////////////////
 int idalloc(int dev,int ino){
     int i;
@@ -40,7 +42,8 @@ int idalloc(int dev,int ino){
 }
 
 /////////////////////////////////////////////////////////////////////////
-// bdalloc() deallocate a block
+// bdalloc() deallocate a data block
+// return: none
 /////////////////////////////////////////////////////////////////////////
 int bdalloc(int dev,int blkno){
     int i;
@@ -57,6 +60,7 @@ int bdalloc(int dev,int blkno){
 /////////////////////////////////////////////////////////////////////////
 // dec() decrement number of free inodes or blocks
 // blktype: 0 - inode, 1 - block
+// return: none
 /////////////////////////////////////////////////////////////////////////
 int dec(int dev, int blktype){
     get_block(dev, SBLK, buff);
@@ -76,7 +80,8 @@ int dec(int dev, int blktype){
 }
 
 /////////////////////////////////////////////////////////////////////////
-// enter_child() enters a new dir into the parent directory
+// enter_child() add a new child dir under the parent directory
+// return: 1 for sucess
 /////////////////////////////////////////////////////////////////////////
 int enter_child(MINODE *pip,int ino, char *child){
     DIR *dp;
@@ -142,7 +147,8 @@ int enter_child(MINODE *pip,int ino, char *child){
 }
 
 /////////////////////////////////////////////////////////////////////////
-// tokenize() tokenize a path into dir names
+// tokenize() tokenize the pathname into component strings
+// return: array of pathname
 /////////////////////////////////////////////////////////////////////////
 int tokenize(char *path){
     char *temp = strtok(path,"/");
@@ -156,7 +162,8 @@ int tokenize(char *path){
 }
 
 /////////////////////////////////////////////////////////////////////////
-// get_block() reads a disk block into a buf[ ]
+// get_block() get data from data block
+// return: none
 /////////////////////////////////////////////////////////////////////////
 int get_block(int dev, int blk, char *buf)
 {
@@ -165,7 +172,8 @@ int get_block(int dev, int blk, char *buf)
 }
 
 /////////////////////////////////////////////////////////////////////////
-// put_block() writes a block to disk
+// put_block() put data back into data block
+// return: none
 /////////////////////////////////////////////////////////////////////////
 int put_block(int dev, int blk, char *buf){
     lseek(dev,(long)blk*BLKSIZE,SEEK_SET);
@@ -173,7 +181,9 @@ int put_block(int dev, int blk, char *buf){
 }
 
 /////////////////////////////////////////////////////////////////////////
-// search() searches for filename in given DIR
+// search() traversing inode table for the component strings in successive 
+//          directory minodes.
+// return: inode 
 /////////////////////////////////////////////////////////////////////////
 int search(MINODE *mip, char *name){
     printf("search(): searching for file: %s...\n",name);
@@ -208,6 +218,7 @@ int search(MINODE *mip, char *name){
 
 /////////////////////////////////////////////////////////////////////////
 // minodeExists() checks if an minode already exists in memory
+// return: index of minode
 /////////////////////////////////////////////////////////////////////////
 int minodeExists(int dev, int ino){
     //printf("minodeExists(): checking if inode exists in memory...\n");
@@ -221,6 +232,7 @@ int minodeExists(int dev, int ino){
 
 /////////////////////////////////////////////////////////////////////////
 // minodeRef() check for an unused minode
+// return: index of minode
 /////////////////////////////////////////////////////////////////////////
 int minodeRef(){
     //printf("minodeRef(): looking for unused location in memory...\n");
@@ -233,7 +245,11 @@ int minodeRef(){
 }
 
 /////////////////////////////////////////////////////////////////////////
-// iget() gets an INODE from the device
+// iget() search in minode
+// return: a pointer to the in memory INODE of (dev, ino).
+// The returned minode is unique, i.e. only one copy of the INODE exists in memory. 
+// In addition, the minode is locked for exclusive use until it is either released or 
+// unlocked.
 /////////////////////////////////////////////////////////////////////////
 MINODE *iget(int dev, int ino){
     //printf("iget(): getting inode from device...\n");
@@ -276,7 +292,10 @@ MINODE *iget(int dev, int ino){
 }
 
 /////////////////////////////////////////////////////////////////////////
-// iput() writes an minode back to its disk
+// iput() releases and unlocks a minode pointed by mip. 
+//        If the process is the last one to use the minode (refCount = 0), 
+//        the INODE is written back to disk if it is dirty (modified).
+// return: none
 /////////////////////////////////////////////////////////////////////////
 int iput(MINODE *mip){
     printf("writing inode back to disk...\n");
@@ -310,7 +329,11 @@ int iput(MINODE *mip){
 }
 
 /////////////////////////////////////////////////////////////////////////
-// getino()
+// getino() get inode number
+// return: the inode number of a pathname.
+// While traversing a pathname the device number may change if the
+// pathname crosses mounting point(s). The parameter dev is used to record the final
+// device number. Thus, getino() essentially returns the (dev, ino) of a pathname.
 /////////////////////////////////////////////////////////////////////////
 int getino(char *pathname)
 {
@@ -367,7 +390,8 @@ int getino(char *pathname)
 }
 
 /////////////////////////////////////////////////////////////////////////
-// ialloc() allocates an inode on device
+// ialloc() allocates an inode on device (disk)
+// return: a inode number, 0 for no inode available
 /////////////////////////////////////////////////////////////////////////
 int ialloc(int dev){
     char buf[BLKSIZE];
@@ -383,11 +407,12 @@ int ialloc(int dev){
         }
     }
     printf("no inodes!!!\n");
-    return 0; // no free inodes available
+    return 0; // no free inode available
 }
 
 /////////////////////////////////////////////////////////////////////////
-// balloc() allocates a free disk block on device
+// balloc() allocates a free data block on device (disk)
+// return: a data block number, 0 for no data block available
 /////////////////////////////////////////////////////////////////////////
 int balloc(int dev){
     char buf[BLKSIZE];
@@ -406,6 +431,15 @@ int balloc(int dev){
 
 /////////////////////////////////////////////////////////////////////////
 // mount_root() mounts the root of the filesystem from the device
+// return: none
+// this function is called during system initialization
+// to mount the root file system. It reads the superblock of the root device
+// to verify the device is a valid EXT2 file system. It loads the root INODE (ino = 2)
+// into a minode and sets the root pointer to the root minode. Then it unlocks the root
+// minode to allow all processes to access the root minode. A mount table entry is allocated
+// to record the mounted root file system. Some key parameters on the root
+// device, such as the starting blocks of the bitmaps and inodes table, are also recorded
+// in the mount table for quick reference.
 /////////////////////////////////////////////////////////////////////////
 int mount_root(){
     printf("ATTEMPTING TO MOUNT FILESYSTEM...\n");
@@ -469,6 +503,7 @@ int mount_root(){
 
 /////////////////////////////////////////////////////////////////////////
 // init() initializes FS data structures
+// return: none
 /////////////////////////////////////////////////////////////////////////
 int init(){
     printf("Initializing FS data structures...\n");

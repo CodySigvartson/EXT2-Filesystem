@@ -1,5 +1,30 @@
 #include "l7.h"
 
+/*
+
+
+************** Algorithm of open() ***********
+int open(file, flags)
+{
+    1. get file's minode:
+    ino = getino(&dev, file);
+    if (ino==0 && O_CREAT)
+    {
+        creat(file); ino = getino(&dev, file);
+    }
+    mip = iget(dev, ino);
+    2. check file INODE's access permission;
+    for non-special file, check for incompatible open modes;
+    3. allocate an openTable entry;
+    initialize openTable entries;
+    set byteOffset = 0 for R|W|RW; set to file size for APPEND mode;
+    4. Search for a FREE fd[ ] entry with the lowest index fd in PROC;
+    let fd[fd]point to the openTable entry;
+    5. unlock minode;
+    return fd as the file descriptor;
+}
+
+*/
 int check_special_file(u16 mode);
 int check_file_open(MINODE *mip);
 int wipe_contents(INODE *ip);
@@ -9,6 +34,12 @@ int wipe_contents(INODE *ip);
 // 1: W
 // 2: RW
 // 3: APPEND
+
+
+/////////////////////////////////////////////////////////////////////////
+// my_open() a file for read or write, where flags = 0|1|2|3|4 for R|W|RW|APPEND
+// return: -1 for invalid, file descriptor
+/////////////////////////////////////////////////////////////////////////
 int my_open(char *pathname, int flag){
     // get the inode into memory
     int ino = getino(pathname);

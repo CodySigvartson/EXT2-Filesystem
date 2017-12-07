@@ -1,7 +1,21 @@
 #include "l7.h"
+/*
+
+creat(char * pathname)
+{
+    This is similar to mkdir() except
+    (1). the INODE.i_mode field is set to REG file type, permission
+        bits set to 0644 for rw-r--r--, and 
+    (2). no data block is allocated for it, so the file size is 0.
+    (3). Do not increment parent INODE's links_count
+}
+
+
+*/
 
 /////////////////////////////////////////////////////////////////////////
 // my_creat_util()
+// return: none
 /////////////////////////////////////////////////////////////////////////
 int my_creat_util(MINODE *pmip, char *file){
     int ino = ialloc(dev);
@@ -27,7 +41,10 @@ int my_creat_util(MINODE *pmip, char *file){
 }
 
 /////////////////////////////////////////////////////////////////////////
-// my_creat()
+// my_creat() creating files with proper permissions
+//            pmip: parent inode to add new dir as child of
+//            dir: name of new dir to create
+// return: none
 /////////////////////////////////////////////////////////////////////////
 int my_creat(char *pathname){
     char path_buff[128], file_buff[128];

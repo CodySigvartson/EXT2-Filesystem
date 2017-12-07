@@ -1,7 +1,24 @@
 #include "l7.h"
 
+/*
+
+Algorithm of symlink(old_file, new_file)
+{
+    1. check: old_file must exist and new_file not yet exist;
+    2. create new_file; change new_file to SLINK type;
+    3. // assume length of old_file name <= 60 chars
+    store old_file name in newfile's INODE.i_block[ ] area.
+    mark new_file's minode dirty;
+    iput(new_file's minode);
+    4. mark new_file parent minode dirty;
+    put(new_file's parent minode);
+}
+
+*/
+
 /////////////////////////////////////////////////////////////////////////
-// my_symlink_util()
+// my_symlink_util() 
+// return: none
 /////////////////////////////////////////////////////////////////////////
 int my_symlink_util(MINODE *pmip,char *old_file, char *file){
     // allocate a location for the new file
@@ -26,7 +43,10 @@ int my_symlink_util(MINODE *pmip,char *old_file, char *file){
 }
 
 /////////////////////////////////////////////////////////////////////////
-// my_symlink()
+// my_symlink() link from new_file to old_file. Unlike
+//                   hard links, symlink can link to anything, 
+//                   including DIRs or files not on the same device
+// return: none
 /////////////////////////////////////////////////////////////////////////
 int my_symlink(char *old_file, char *new_file){
     char path_buff[128], file_buff[128];
