@@ -67,8 +67,8 @@ int main(int argc, char *argv[]){
     mount_root();
 
     while(1){
-        printf("Level 1: cd | pwd | ls | mkdir | creat | rmdir | link | unlink | symlink | readlink | chmod [mode] [file] | touch\n");
-        printf("Level 2: open [file] [mode] | close [fd] | read [fd] [nbytes] [space] | write [fd] [nbytes] | quit\n");
+        printf("Level 1: cd | pwd | ls | mkdir | creat | rmdir | link [oldf] [newf] | unlink [f] | symlink [oldf] [newf] | readlink [f] | chmod [mode] [f] | touch [f]\n");
+        printf("Level 2: open [f] [mode] | close [fd] | read [fd] [nbytes] [space] | write [fd] [nbytes] | quit\n");
         printf("Enter a command: ");
         fgets(cmd,CMD_BUFF,stdin);
         int n = strlen(cmd);

@@ -5,7 +5,7 @@ int my_touch(char *pathname){
     MINODE *mip = iget(dev,ino);
     INODE *ip = &mip->INODE;
 
-    ip->i_atime = time(0L);
+    ip->i_atime = ip->i_mtime = time(0L);
     mip->dirty = 1;
     iput(mip);
 }

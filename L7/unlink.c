@@ -32,4 +32,7 @@ int my_unlink(char *filename){
         }
         iput(mip);
     }
+    else{
+        printf("Unable to unlink DIR type!\n");
+    }
 }
