@@ -56,9 +56,9 @@ u32 map_lblk_blk(INODE *ip, int lblk);
 
 char buf[BLKSIZE];
 
-int my_read(int fd, char buf[], int nbytes, int space){
+int my_read(int fd, char buf[], int nbytes){
     if(running->fd[fd]->mode == READ_MODE || running->fd[fd]->mode == RW_MODE){
-        read_file(fd,buf,nbytes,space);
+        read_file(fd,buf,nbytes);
 
     }
     else{
@@ -67,7 +67,7 @@ int my_read(int fd, char buf[], int nbytes, int space){
     }
 }
 
-int read_file(int fd, char *buf, int nbytes, int space){
+int read_file(int fd, char *buf, int nbytes){
     OFT *oftp = running->fd[fd];
     // lock minode
     oftp->mptr->lock = 1;
@@ -114,7 +114,7 @@ u32 map_lblk_blk(INODE *ip, int lblk){
     if(lblk < 12){ // return direct blk
         blk = ip->i_block[lblk];
     }
-    else if(12 <- lblk < 12+256){ // indirect block
+    else if(12 <= lblk < 12+256){ // indirect block
         u32 ibuf[256];
         memcpy(ibuf,ip->i_block[12],sizeof(ip->i_block[12]));
         blk = ibuf[lblk-12];

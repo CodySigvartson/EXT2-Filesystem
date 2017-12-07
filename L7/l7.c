@@ -69,7 +69,7 @@ int main(int argc, char *argv[]){
 
     while(1){
         printf("Level 1: cd | pwd | ls | mkdir | creat | rmdir | link [oldf] [newf] | unlink [f] | symlink [oldf] [newf] | readlink [f] | chmod [mode] [f] | touch [f]\n");
-        printf("Level 2: open [f] [mode] | close [fd] | read [fd] [nbytes] [space] | write [fd] [nbytes] | quit\n");
+        printf("Level 2: open [f] [mode] | close [fd] | read [fd] [nbytes] | write [fd] [nbytes] | quit\n");
         printf("Enter a command: ");
         fgets(cmd,CMD_BUFF,stdin);
         int n = strlen(cmd);
@@ -147,17 +147,15 @@ int main(int argc, char *argv[]){
                 if(myargv[1])
                     my_close(atoi(myargv[1]));
                 break;
-            case 14:{ // read
-                if(myargv[1] && myargv[2] && myargv[3]){
-                    int bytes_read = my_read(atoi(myargv[1]),read_buff,atoi(myargv[2]),atoi(myargv[3]));
-                    printf("bytes_read = %d\n");
-                    printf("buff_read[0] = %c\n",read_buff[0]);
+            case 14: // read
+                if(myargv[1] && myargv[2]){
+                    my_read(atoi(myargv[1]),read_buff,atoi(myargv[2]));
+                    printf("buff_read = %s\n",read_buff);
                 }
-            }
                 break;
             case 15: // write
                 if(myargv[1] && myargv[2])
-                    //my_write(atoi(myargv[1]),atoi(myargv[2]));
+                    my_write(atoi(myargv[1]),read_buff,atoi(myargv[2]));
                 break;
             case 16: // quit
                 quit();

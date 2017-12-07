@@ -1,5 +1,4 @@
-#include "l7.h";
-
+#include "l7.h"
 /*
 
 *************** Algorithm of kwrite() in kernel ****************
@@ -51,6 +50,52 @@ int write_file(int fd, char *buf, int nbytes)
 */
 
 char buf[BLKSIZE];
+/////////////////////////////////////////////////////////////////////////
+// map_lblk_blk() convert the logical block number to physical block in mem
+// return: physical data block
+/////////////////////////////////////////////////////////////////////////
+u32 map_lblk_blk_w(INODE *ip, int lblk){
+    u32 blk;
+
+    if(lblk < 12){ // return direct blk
+        blk = ip->i_block[lblk];
+
+        if(blk == 0){ // does not exist
+        	ip->i_block[lblk] = balloc(dev);
+        	blk = ip->i_block[lblk];
+        }
+    }
+
+    if(12 <= lblk < 12 + 256){ // single indirect block
+        u32 ibuf[256];
+        memcpy(ibuf,ip->i_block[12],sizeof(ip->i_block[12]));
+        blk = ibuf[lblk-12];
+
+        if(blk == 0){ // does not exist
+        	ip->i_block[lblk] = balloc(dev);
+        	blk = ip->i_block[lblk];
+        }
+    }
+
+    if(12 + 256 <= lblk < 12 + 256 * 256){ // double indirect blocks
+        u32 dbuf[256];
+        memcpy(dbuf,ip->i_block[13],sizeof(ip->i_block[13]));
+        lblk -= (12+256);
+        u32 dblk = dbuf[lblk/256];
+        memset(dbuf,0,sizeof(dbuf));
+        memcpy(dbuf,dblk,sizeof(dblk));
+        blk = dbuf[lblk % 256];
+
+        if(blk == 0){ // does not exist
+        	ip->i_block[lblk] = balloc(dev);
+        	blk = ip->i_block[lblk];
+        }
+    }
+    
+return blk;
+
+}
+
 
 /////////////////////////////////////////////////////////////////////////
 // write_file() writes nbytes from ubuf in user space to an opened file 
@@ -64,7 +109,7 @@ char buf[BLKSIZE];
 // and recorded in the indirect block, etc. The reader may consult the write.c file for
 // details.
 /////////////////////////////////////////////////////////////////////////
-int write_file(int fd, char *ubuf,int nbytes){
+int write_file(fd, buf, nbytes){
 	printf("inside write_file()\n");
 	OFT *oftp = running->fd[fd];
 	MINODE *mip = oftp->mptr;
@@ -72,57 +117,54 @@ int write_file(int fd, char *ubuf,int nbytes){
 	oftp->mptr->lock = 1; // 1 for lock, 0 for unlock
 
     int count = 0; // number of bytes written
+
+    // get number of bytes to read
+    int bytesAvail = (ip->i_size - oftp->offset);
 	
 	while(nbytes){
-		// get logical block
-        u32 lblk = oftp->offset / BLKSIZE;
-
+		u32 lblk = oftp->offset / BLKSIZE; // compute logical block
         // get the start byte in the block
         int start = oftp->offset % BLKSIZE;
 
         // get physical block location
-        u32 blk = map_lblk_blk(ip,lblk);
+        u32 blk = map_lblk_blk_w(ip,lblk);
 
         // read the block into buff
         get_block(dev,blk,buff);
 
         // point to start reading location
-		lblk = oftp->offset / BLKSIZE; // compute logical block
 		start = oftp->offset % BLKSIZE; // compute start byte
 
 		get_block(dev, blk, buf); // read blk into buf[BLKSIZE];
 	    char *cp = buf + start;
 	    int remain = BLKSIZE - start;
 
-		while(remain){
-			//put_ubyte(*cp++, *ubuf++);
+	    // get the size of bytes to read
+        int sizeToCopy;
+        if(nbytes < remain) // check if getting all bytes requested
+            sizeToCopy = nbytes;
+        else // bytes requested is greater than what is remaining to copy
+            sizeToCopy = remain;
+        
+        // copy data in to buffer
+        memcpy(buf,buff,sizeToCopy);
+        // update vars
+        count += sizeToCopy;
+        nbytes -= sizeToCopy;
+        bytesAvail -= sizeToCopy;
+        oftp->offset += sizeToCopy;
 
-			oftp->offset++;	// inc offset
-			count++;	// inc count;
-			remain--;	// dec remain;
-			nbytes--;	// dec nbytes;
+		put_block(dev, blk, buf);
 
-			if(oftp->offset > ip->i_size){
-				ip->i_size++; // inc file size
-			}
-
-			// no data to write
-			if(nbytes <= 0){
-				break;
-			}
-
-			put_block(dev, blk, buf);
-
-		}
+	}
 
 	mip->dirty = 1;	// mark minode dirty for iput()
 	mip->lock = 0; // 1 for lock, 0 for unlock
 	//unlock(minode);
 	return count;
 
-	}
-
 }
+
 
 
 /////////////////////////////////////////////////////////////////////////
