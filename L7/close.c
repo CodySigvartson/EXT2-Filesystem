@@ -36,7 +36,7 @@ int my_close(int fd)
 		return -1;
 	}
 
-	oft = running->fd[fd];
+	OFT *oft = running->fd[fd];
 
 	if(oft != 0)
 	{
@@ -48,13 +48,11 @@ int my_close(int fd)
 		if (--oft->refCount == 0) // if last process using this OFT
 		{
 			MINODE *mip = oft->mptr; //last user of this OFT entry ==> dispose of the Minode[]
-
-			oft->lock = 1; // 1 for lock, 0 for unlock
-
+			mip->lock = 1; // 1 for lock, 0 for unlock
 			iput(mip); // release minode and write stuff back to mydisk
 		}
-
 		running->fd[fd] = 0; // clear fd[fd] to 0
+		printf("closed file at fd: %d\n",fd);
 	}
 
 	return 0; // return success

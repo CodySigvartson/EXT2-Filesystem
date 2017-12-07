@@ -1,10 +1,70 @@
 #include "l7.h"
 
+/*
+/************* Algorithm of Insert_dir_entry ******************
+    (1). need_len = 4*((8+name_len+3)/4); // new entry need length
+    (2). for each existing data block do
+    {
+            if (block has only one entry with inode number==0)
+                enter new entry as first entry in block;
+            else
+            {
+                (3). go to last entry in block;
+                ideal_len = 4*((8+last_entry’s name_len+3)/4);
+                remain = last entry's rec_len - ideal_len;
+                if (remain >= need_len){
+                trim last entry's rec_len to ideal_len;
+                enter new entry as last entry with rec_len = remain;
+            }
+            (4). else
+            {
+                allocate a new data block;
+                enter new entry as first entry in the data block;
+                increase DIR's size by BLKSSIZE;
+            }
+        }
+        write block to disk;
+    }
+(5). mark DIR's minode modified for write back;
+
+
+/********* Algorithm of mkdir *********
+int mkdir(char *pathname)
+{
+    1. if (pathname is absolute) dev = root ->dev;
+    else dev = PROC's cwd->dev
+    2. divide pathname into dirname and basename;
+    3. // dirname must exist and is a DIR:
+    pino = getino(&dev, dirname);
+    pmip = iget(dev, pino);
+    check pmip ->INODE is a DIR
+    4. // basename must not exist in parent DIR:
+    search(pmip, basename) must return 0;
+    5. call kmkdir(pmip, basename) to create a DIR;
+    kmkdir() consists of 4 major steps:
+    5-1. allocate an INODE and a disk block:
+    ino = ialloc(dev); blk = balloc(dev);
+    mip = iget(dev,ino); // load INODE into an minode
+    5-2. initialize mip->INODE as a DIR INODE;
+    mip->INODE.i_block[0] = blk; other i_block[ ] are 0;
+    mark minode modified (dirty);
+    iput(mip); // write INODE back to disk
+    5-3. make data block 0 of INODE to contain . and .. entries;
+    write to disk block blk.
+    5-4. enter_child(pmip, ino, basename); which enters
+    (ino, basename) as a DIR entry to the parent INODE;
+    6. increment parent INODE's links_count by 1 and mark pmip dirty;
+    iput(pmip);
+}
+
+
+*/
+
 /////////////////////////////////////////////////////////////////////////
-// my_mkdir_util()
-// creates the new dir with proper permissions
-// pmip: parent inode to add new dir as child of
-// dir: name of new dir to create
+// my_mkdir_util() making directories and creating files with proper permissions
+//                 pmip: parent inode to add new dir as child of
+//                 dir: name of new dir to create
+// return: none
 /////////////////////////////////////////////////////////////////////////
 int my_mkdir_util(MINODE *pmip, char *dir){
     // allocate a new block and inode location on disk

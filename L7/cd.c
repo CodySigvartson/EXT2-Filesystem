@@ -1,8 +1,20 @@
 #include "l7.h"
+/*
+
+************ Algorithm of chdir *************
+int chdir(char *pathname)
+{
+    (1). get INODE of pathname into a minode;
+    (2). verify it is a DIR;
+    (3). change running process CWD to minode of pathname;
+    (4). iput(old CWD); return 0 for OK;
+}
+
+*/
 
 /////////////////////////////////////////////////////////////////////////
 // cd() change cwd to pathname
-// return ino of the file in the pathname
+// return: ino of the file in the pathname
 /////////////////////////////////////////////////////////////////////////
 int cd(char *pathname){
     int ino;

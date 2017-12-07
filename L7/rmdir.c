@@ -1,7 +1,53 @@
 #include "l7.h"
 
+/*
+
+************ Algorithm of Delete_dir_entry (name) *************
+(1). search DIR's data block(s) for entry by name;
+
+(2). if (entry is the only entry in block)
+        clear entry’s inode number to 0;
+    else
+    {
+        (3). if (entry is last entry in block)
+        add entry's rec_len to predecessor entry's rec_len;
+        (4). else{ // entry in middle of block
+        add entry's rec_len to last entry's rec_len;
+        move all trailing entries left to overlay deleted entry;
+    }
+}
+(5). write block back to disk;
+
+
+************ Algorithm of rmdir *************
+rmdir(char *pathname)
+{
+    1. get in- memory INODE of pathname:
+    ino = getino(&de, pathanme);
+    mip = iget(dev,ino);
+    2. verify INODE is a DIR (by INODE.i_mode field);
+    minode is not BUSY (refCount = 1);
+    DIR is empty (traverse data blocks for number of entries = 2);
+    3. get parent's ino and inode 
+    pino = findino(); //get pino from .. entry in INODE.i_block[0]
+    pmip = iget(mip->dev, pino);
+    4. remove name from parent directory
+    findname(pmip, ino, name); //find name from parent DIR
+    rm_child(pmip, name);
+    5. deallocate its data blocks and inode
+    truncat(mip); // deallocate INODE's data blocks
+    6. deallocate INODE
+    idalloc(mip->dev, mip->ino); iput(mip);
+    7. dec parent links_count by 1;
+    mark parent dirty; iput(pmip);
+    8. return 0 for SUCCESS.
+}
+*/
+
 /////////////////////////////////////////////////////////////////////////
-// my_rmdir()
+// my_rmdir() removing a non-empty directory implies removing all the files
+//            and subdirectories in the directory
+// return: -1 for error
 /////////////////////////////////////////////////////////////////////////
 int my_rmdir(char *pathname){
     if(!pathname){
@@ -34,7 +80,7 @@ int my_rmdir(char *pathname){
                     dp = (DIR *)cp;
                 }
                 if(count > 2){
-                    printf("unable to remoe dir: not empty\n");
+                    printf("unable to remove dir: not empty\n");
                     return -1;
                 }
             }
