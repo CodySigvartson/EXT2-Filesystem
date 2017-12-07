@@ -154,8 +154,10 @@ int main(int argc, char *argv[]){
                 }
                 break;
             case 15: // write
-                if(myargv[1] && myargv[2])
+                if(myargv[1] && myargv[2]){
+                    printf("entering write\n");
                     my_write(atoi(myargv[1]),read_buff,atoi(myargv[2]));
+                }
                 break;
             case 16: // quit
                 quit();
