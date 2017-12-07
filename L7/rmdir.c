@@ -86,6 +86,7 @@ int my_rmdir(char *pathname){
             }
         }
     }
+    
     printf("my_rmdir(): dir is empty, OK to remove\n");
     char parPath[128], dirName[128];
     strcpy(parPath,pathname);
@@ -117,7 +118,8 @@ int my_rmdir(char *pathname){
 }
 
 /////////////////////////////////////////////////////////////////////////
-// rm_child()
+// rm_child() remove a child from a parent node
+// return: none
 /////////////////////////////////////////////////////////////////////////
 int rm_child(MINODE *pmip, int ino, char *name){
     int i,blk;
