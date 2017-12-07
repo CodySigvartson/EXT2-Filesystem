@@ -51,7 +51,7 @@ char read_buff[BLKSIZE];
 /////////////////////////////////////////////////////////////////////////
 int quit(){
     for(int i = 0 ; i < NMINODE; i++){
-        if(minodes[i].refCount > 0){
+        if(minodes[i].refCount > 0 && minodes[i].dirty == 1){
             printf("putting inode..\n");
             iput(&minodes[i]);
         }
@@ -146,10 +146,13 @@ int main(int argc, char *argv[]){
                 if(myargv[1])
                     my_close(atoi(myargv[1]));
                 break;
-            case 14: // read
+            case 14:{ // read
                 if(myargv[1] && myargv[2] && myargv[3]){
-                    my_read(atoi(myargv[1]),read_buff,atoi(myargv[2]),atoi(myargv[3]));
+                    int bytes_read = my_read(atoi(myargv[1]),read_buff,atoi(myargv[2]),atoi(myargv[3]));
+                    printf("bytes_read = %d\n");
+                    printf("buff_read[0] = %c\n",read_buff[0]);
                 }
+            }
                 break;
             case 15: // write
                 if(myargv[1] && myargv[2])

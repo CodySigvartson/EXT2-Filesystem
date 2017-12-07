@@ -43,6 +43,7 @@ int my_mkdir_util(MINODE *pmip, char *dir){
     dp->rec_len = BLKSIZE-12;
     dp->name_len = 2;
     dp->name[0] = dp->name[1] = '.';
+    // write these dirs into the new dir's data blocks
     put_block(dev,blk,buf);
 
     // enter the newly created dir as a dir of the parent
@@ -86,6 +87,9 @@ int my_mkdir(char *pathname){
         int isFound = search(pmip,dir);
         if(isFound == -1){
             my_mkdir_util(pmip,dir);
+        }
+        else{
+            printf("DIR already exists!\n");
         }
     }
     pmip->INODE.i_links_count++;
