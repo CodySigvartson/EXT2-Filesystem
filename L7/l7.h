@@ -28,12 +28,21 @@ typedef struct ext2_dir_entry_2 DIR;
 #define NFD           16  // number file descriptor
 #define NPROC          2  // number process
 
+<<<<<<< HEAD
 #define READ_MODE      0
 #define WRITE_MODE     1
 #define RW_MODE        2
 #define APPEND_MODE    3
 
 #define CMD_BUFF     128
+=======
+#define READ_MODE 0
+#define WRITE_MODE 1
+#define RW_MODE 2
+#define APPEND_MODE 3
+
+#define CMD_BUFF 128
+>>>>>>> 7b7e0b259e08b6195fe3b0afc4ac37330387156b
 
 typedef struct minode{
   INODE INODE;

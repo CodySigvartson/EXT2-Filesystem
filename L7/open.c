@@ -107,6 +107,7 @@ int my_open(char *pathname, int flag){
             }
         }
     }
+    return -1;
 }
 
 // check if file has any special usages. i_mode bits 9-11 should be 000 if not special usage

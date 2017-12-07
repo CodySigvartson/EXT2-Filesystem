@@ -34,6 +34,9 @@ int my_link(char *old_file, char *new_file){
     strcpy(file_buff,new_file);
     // get the inode to hard link to
     int oldino = getino(old_file);
+    if(oldino == 0){
+        printf("Unable to link, old file does not exist!\n");
+    }
     printf("link(): linking to ino: %d\n",oldino);
     MINODE *oldmip = iget(dev,oldino);
     // check we are hardlinking to file
@@ -45,6 +48,7 @@ int my_link(char *old_file, char *new_file){
         printf("link(): file to be made: %s\n",file);
         int parentino = getino(parent);
         MINODE *parentmip = iget(dev,parentino);
+        // check that new file does not exist
         if(search(parentmip,file)<0){
             enter_child(parentmip,oldino,file);
             oldmip->INODE.i_links_count++;
@@ -52,5 +56,8 @@ int my_link(char *old_file, char *new_file){
             iput(oldmip);
             iput(parentmip);
         }
+    }
+    else{
+        printf("Cannot link to DIR type!\n");
     }
 }
