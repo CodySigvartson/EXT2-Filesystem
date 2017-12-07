@@ -109,7 +109,7 @@ return blk;
 // and recorded in the indirect block, etc. The reader may consult the write.c file for
 // details.
 /////////////////////////////////////////////////////////////////////////
-int write_file(fd, buf, nbytes){
+int write_file(int fd, char *buf,int nbytes){
 	printf("inside write_file()\n");
 	OFT *oftp = running->fd[fd];
 	MINODE *mip = oftp->mptr;
