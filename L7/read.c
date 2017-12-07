@@ -1,6 +1,4 @@
 #include "l7.h"
-
-<<<<<<< HEAD
 /*
 
 **************** Algorithm of kread() in kernel ****************
@@ -53,10 +51,7 @@ int read_file(int fd, char *buf, int nbytes, int space)
 //			 which implements the read system call
 // return: -1 for read file
 /////////////////////////////////////////////////////////////////////////
-int my_read(int fd, char buf[], int nbytes, int space){
-    if(running->fd[fd]->mode == READ_MODE || running->fd[fd]->mode == RW_MODE){
-        
-=======
+
 u32 map_lblk_blk(INODE *ip, int lblk);
 
 char buf[BLKSIZE];
@@ -64,7 +59,7 @@ char buf[BLKSIZE];
 int my_read(int fd, char buf[], int nbytes, int space){
     if(running->fd[fd]->mode == READ_MODE || running->fd[fd]->mode == RW_MODE){
         read_file(fd,buf,nbytes,space);
->>>>>>> 7b7e0b259e08b6195fe3b0afc4ac37330387156b
+
     }
     else{
         printf("Cannot read file. File was not opened for valid read mode\n");
@@ -72,10 +67,6 @@ int my_read(int fd, char buf[], int nbytes, int space){
     }
 }
 
-<<<<<<< HEAD
-int read_file(int fd, char buf[], int nbytes, int space){
-
-=======
 int read_file(int fd, char *buf, int nbytes, int space){
     OFT *oftp = running->fd[fd];
     // lock minode
@@ -138,5 +129,4 @@ u32 map_lblk_blk(INODE *ip, int lblk){
         blk = dbuf[lblk % 256];
     }
     return blk;
->>>>>>> 7b7e0b259e08b6195fe3b0afc4ac37330387156b
 }

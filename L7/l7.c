@@ -17,10 +17,7 @@
 #include "open.c"
 #include "close.c"
 #include "read.c"
-<<<<<<< HEAD
 #include "write.c"
-=======
->>>>>>> 7b7e0b259e08b6195fe3b0afc4ac37330387156b
 
 MINODE minodes[NMINODE];		// inode table
 MINODE *root;					
@@ -49,11 +46,7 @@ char *names[64];
 char *myargv[64];
 // read file buff
 char read_buff[BLKSIZE];
-<<<<<<< HEAD
 char write_buff[BLKSIZE];
-=======
-
->>>>>>> 7b7e0b259e08b6195fe3b0afc4ac37330387156b
 /////////////////////////////////////////////////////////////////////////
 // quit() for any changes write it back into mydisk then quit.
 /////////////////////////////////////////////////////////////////////////

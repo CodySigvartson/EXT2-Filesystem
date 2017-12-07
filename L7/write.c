@@ -53,38 +53,6 @@ int write_file(int fd, char *buf, int nbytes)
 char buf[BLKSIZE];
 
 /////////////////////////////////////////////////////////////////////////
-// map_lblk_blk() converting logical block to physical block for write
-// return: physical block
-/////////////////////////////////////////////////////////////////////////
-u32 map_lblk_blk(INODE *ip, int lblk){
-    u32 blk;
-    if(lblk < 0){
-    	ialloc()//---------------------------------
-    }
-
-    if(lblk < 12){ // return direct blk
-        blk = ip->i_block[lblk];
-    }
-    
-    if(12 <- lblk < 12 + 256){ // single indirect block
-        u32 ibuf[256];
-        memcpy(ibuf,ip->i_block[12],sizeof(ip->i_block[12]));
-        blk = ibuf[lblk-12];
-    }
-
-    if(lblk <= 12 + 256 * 256){  // double indirect blocks
-        u32 dbuf[256];
-        memcpy(dbuf,ip->i_block[13],sizeof(ip->i_block[13]));
-        lblk -= (12+256);
-        u32 dblk = dbuf[lblk/256];
-        memset(dbuf,0,sizeof(dbuf));
-        memcpy(dbuf,dblk,sizeof(dblk));
-        blk = dbuf[lblk % 256];
-    }
-    return blk;
-}
-
-/////////////////////////////////////////////////////////////////////////
 // write_file() writes nbytes from ubuf in user space to an opened file 
 // 				descriptor and returns the actual number of bytes written
 // return: none
@@ -96,7 +64,7 @@ u32 map_lblk_blk(INODE *ip, int lblk){
 // and recorded in the indirect block, etc. The reader may consult the write.c file for
 // details.
 /////////////////////////////////////////////////////////////////////////
-int write_file(fd, ubuf, nbytes){
+int write_file(int fd, char *ubuf,int nbytes){
 	printf("inside write_file()\n");
 	OFT *oftp = running->fd[fd];
 	MINODE *mip = oftp->mptr;
@@ -119,23 +87,23 @@ int write_file(fd, ubuf, nbytes){
         get_block(dev,blk,buff);
 
         // point to start reading location
-		lbk = oftp->offset / BLOCK_SIZE; // compute logical block
-		start = oftp->offset % BLOCK_SIZE; // compute start byte
+		lblk = oftp->offset / BLKSIZE; // compute logical block
+		start = oftp->offset % BLKSIZE; // compute start byte
 
 		get_block(dev, blk, buf); // read blk into buf[BLKSIZE];
 	    char *cp = buf + start;
 	    int remain = BLKSIZE - start;
 
 		while(remain){
-			put_ubyte(*cp++, *ubuf++);
+			//put_ubyte(*cp++, *ubuf++);
 
 			oftp->offset++;	// inc offset
 			count++;	// inc count;
 			remain--;	// dec remain;
 			nbytes--;	// dec nbytes;
 
-			if(offset > fileSize){
-				fileSize++; // inc file size
+			if(oftp->offset > ip->i_size){
+				ip->i_size++; // inc file size
 			}
 
 			// no data to write

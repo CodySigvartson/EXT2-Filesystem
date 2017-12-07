@@ -139,7 +139,6 @@ int rm_child(MINODE *pmip, int ino, char *name){
                 char dir[128];
                 strcpy(dir,dp->name);
                 dir[dp->name_len]=0;
-                printf("name: %s dirname: %s\n",name,dir);
                 if(strcmp(name, dir)==0 && ino == dp->inode){
                     printf("rm_child(): found dir to remove in the data block\n");
                     found = 1;
