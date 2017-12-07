@@ -22,32 +22,67 @@ int write_file(int fd, char *buf, int nbytes)
 	{
 		compute logical block: lbk = oftp->offset / BLOCK_SIZE;
 		compute start byte: start = oftp->offset % BLOCK_SIZE;
-	}
-	(4). convert lbk to physical block number, blk;
-	(5). read_block(dev, blk, kbuf); // read blk into kbuf[BLKSIZE];
-		char *cp = kbuf +start; remain = BLKSIZE - start;
-	(6). while(remain)
-	{
-		put_ubyte(*cp++, *ubuf++);
-		offset++;	// inc offset
-		count++;	// inc count;
-		remain--;	// dec remain;
-		nbytes--;	// dec nbytes;
-		if(offset > fileSize)
+	
+		(4). convert lbk to physical block number, blk;
+		(5). read_block(dev, blk, kbuf); // read blk into kbuf[BLKSIZE];
+			char *cp = kbuf +start; remain = BLKSIZE - start;
+		(6). while(remain)
 		{
-			fileSize++; // inc file size
+			put_ubyte(*cp++, *ubuf++);
+			offset++;	// inc offset
+			count++;	// inc count;
+			remain--;	// dec remain;
+			nbytes--;	// dec nbytes;
+			if(offset > fileSize)
+			{
+				fileSize++; // inc file size
+			}
+			if(nbytes <= 0)
+			{
+				break;
+			}
+			(7). write_block(dev, blk, kbuf);
 		}
-		if(nbytes <= 0)
-		{
-			break;
-		}
-		(7). write_block(dev, blk, kbuf);
 	}
 	set minode dirty = 1;	// mark minode dirty for iput()
 	unlock(minode);
 	return count;
 }
 */
+
+char buf[BLKSIZE];
+
+/////////////////////////////////////////////////////////////////////////
+// map_lblk_blk() converting logical block to physical block for write
+// return: physical block
+/////////////////////////////////////////////////////////////////////////
+u32 map_lblk_blk(INODE *ip, int lblk){
+    u32 blk;
+    if(lblk < 0){
+    	ialloc()//---------------------------------
+    }
+
+    if(lblk < 12){ // return direct blk
+        blk = ip->i_block[lblk];
+    }
+    
+    if(12 <- lblk < 12 + 256){ // single indirect block
+        u32 ibuf[256];
+        memcpy(ibuf,ip->i_block[12],sizeof(ip->i_block[12]));
+        blk = ibuf[lblk-12];
+    }
+
+    if(lblk <= 12 + 256 * 256){  // double indirect blocks
+        u32 dbuf[256];
+        memcpy(dbuf,ip->i_block[13],sizeof(ip->i_block[13]));
+        lblk -= (12+256);
+        u32 dblk = dbuf[lblk/256];
+        memset(dbuf,0,sizeof(dbuf));
+        memcpy(dbuf,dblk,sizeof(dblk));
+        blk = dbuf[lblk % 256];
+    }
+    return blk;
+}
 
 /////////////////////////////////////////////////////////////////////////
 // write_file() writes nbytes from ubuf in user space to an opened file 
@@ -61,40 +96,79 @@ int write_file(int fd, char *buf, int nbytes)
 // and recorded in the indirect block, etc. The reader may consult the write.c file for
 // details.
 /////////////////////////////////////////////////////////////////////////
-int write_file(fd, ubuf, nbytes)
-{
+int write_file(fd, ubuf, nbytes){
 	printf("inside write_file()\n");
-	/**************** Algorithm of write() regular file ****************
-	int write_file(int fd, char *ubuf, int nbytes)
-	{
-		(1). lock minode;
-		(2). count = 0; // number of bytes written
-				compute logical block: lbk = oftp->offset / BLOCK_SIZE;
-				compute start byte: start = oftp->offset % BLOCK_SIZE;
-		(3). while(nbytes)
-			{
-				compute logical block: lbk = oftp->offset / BLOCK_SIZE;
-				compute start byte: start = oftp->offset % BLOCK_SIZE;
-				
+	OFT *oftp = running->fd[fd];
+	MINODE *mip = oftp->mptr;
+    INODE *ip = &mip->INODE;
+	oftp->mptr->lock = 1; // 1 for lock, 0 for unlock
+
+    int count = 0; // number of bytes written
+	
+	while(nbytes){
+		// get logical block
+        u32 lblk = oftp->offset / BLKSIZE;
+
+        // get the start byte in the block
+        int start = oftp->offset % BLKSIZE;
+
+        // get physical block location
+        u32 blk = map_lblk_blk(ip,lblk);
+
+        // read the block into buff
+        get_block(dev,blk,buff);
+
+        // point to start reading location
+		lbk = oftp->offset / BLOCK_SIZE; // compute logical block
+		start = oftp->offset % BLOCK_SIZE; // compute start byte
+
+		get_block(dev, blk, buf); // read blk into buf[BLKSIZE];
+	    char *cp = buf + start;
+	    int remain = BLKSIZE - start;
+
+		while(remain){
+			put_ubyte(*cp++, *ubuf++);
+
+			oftp->offset++;	// inc offset
+			count++;	// inc count;
+			remain--;	// dec remain;
+			nbytes--;	// dec nbytes;
+
+			if(offset > fileSize){
+				fileSize++; // inc file size
 			}
+
+			// no data to write
+			if(nbytes <= 0){
+				break;
+			}
+
+			put_block(dev, blk, buf);
+
+		}
+
+	mip->dirty = 1;	// mark minode dirty for iput()
+	mip->lock = 0; // 1 for lock, 0 for unlock
+	//unlock(minode);
+	return count;
+
 	}
-	*/
-
-
-
-
-
 
 }
 
-int my_write(int fd, char *ubuf, int nbytes)
-{
+
+/////////////////////////////////////////////////////////////////////////
+// my_write() writes nbytes from ubuf in user space to an opened file descriptor
+// return: the actual number of bytes written
+/////////////////////////////////////////////////////////////////////////
+int my_write(int fd, char *ubuf, int nbytes){
 	OFT * oft = running->fd[fd];
 
 	//(1). validate fd; ensure OFT is opened for write;
-	if(running->fd[fd]->mode == WRITE_MODE || running->fd[fd]->mode == RW_MODE || running->fd[fd]->mode == APPEND_MODE)
-	{
+	if(running->fd[fd]->mode == WRITE_MODE || running->fd[fd]->mode == RW_MODE || running->fd[fd]->mode == APPEND_MODE){
 		printf("%s mode opened!\n", running->fd[fd]->mode);
+	}else{
+		printf("Error: cannot write file!\n");
 	}
 	//(2). if(oft.mode = WRITE_PIPE)
 	// if(oft.mode = WRITE_PIPE)

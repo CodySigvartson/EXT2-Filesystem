@@ -42,8 +42,8 @@ int idalloc(int dev,int ino){
 }
 
 /////////////////////////////////////////////////////////////////////////
-// bdalloc() deallocate a block
-// return: 
+// bdalloc() deallocate a data block
+// return: none
 /////////////////////////////////////////////////////////////////////////
 int bdalloc(int dev,int blkno){
     int i;
@@ -60,7 +60,7 @@ int bdalloc(int dev,int blkno){
 /////////////////////////////////////////////////////////////////////////
 // dec() decrement number of free inodes or blocks
 // blktype: 0 - inode, 1 - block
-// return: 
+// return: none
 /////////////////////////////////////////////////////////////////////////
 int dec(int dev, int blktype){
     get_block(dev, SBLK, buff);
@@ -80,8 +80,8 @@ int dec(int dev, int blktype){
 }
 
 /////////////////////////////////////////////////////////////////////////
-// enter_child() enters a new dir into the parent directory
-// return: 
+// enter_child() add a new child dir under the parent directory
+// return: 1 for sucess
 /////////////////////////////////////////////////////////////////////////
 int enter_child(MINODE *pip,int ino, char *child){
     DIR *dp;
