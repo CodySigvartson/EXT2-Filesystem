@@ -111,8 +111,8 @@ int my_mkdir_util(MINODE *pmip, char *dir){
 }
 
 /////////////////////////////////////////////////////////////////////////
-// my_mkdir()
-// makes a directory in the filesystem
+// my_mkdir() makes a directory in the filesystem
+// return: none
 /////////////////////////////////////////////////////////////////////////
 int my_mkdir(char *pathname){
     if(!pathname)
